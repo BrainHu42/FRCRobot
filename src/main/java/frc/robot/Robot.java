@@ -6,7 +6,7 @@ package frc.robot;
 
 import frc.robot.Constants;
 
-import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
@@ -46,8 +46,7 @@ public class Robot extends TimedRobot {
 	// private final DifferentialDrive m_robotDrive = new
 	// DifferentialDrive(m_leftDrive, m_rightDrive);
 
-	private final Joystick leftStick = new Joystick(0);
-	private final Joystick rightStick = new Joystick(1);
+	private final XboxController controller = new XboxController(0);
 
 	private final Timer m_timer = new Timer();
 
@@ -57,6 +56,10 @@ public class Robot extends TimedRobot {
 
 	// Transition
 	private CANSparkMax transitionMotor = new CANSparkMax(Constants.TRANSITION_MOTOR_ID, MotorType.kBrushed);
+	private boolean toggleTransition = false;
+
+	private Spark shooterMotor = new Spark(Constants.SHOOTER_MOTOR_ID);
+	private boolean toggleShooter = false;
 
 	/**
 	 * This function is run when the robot is first started up and should be used
@@ -101,31 +104,31 @@ public class Robot extends TimedRobot {
 	@Override
 	public void teleopPeriodic() {
 		// difDrive.tankDrive(rightJoystick.getY(), leftJoystick.getY());
-		difDrive.arcadeDrive(leftStick.getY(), leftStick.getX());
+		difDrive.arcadeDrive(controller.getLeftY(), controller.getLeftX());
 
-		intakeMotor.set(rightStick.getY())
+		intakeMotor.set(controller.getLeftTriggerAxis());
 
-		// /// Toggles intake from on to off
-		// if (leftStick.getTriggerPressed()) {
-		// 	if (toggleIntake) {
-		// 		// Current state is true so turn off
-		// 		toggleIntake = false;
-		// 	} else {
-		// 		// Current state is false so turn on
-		// 		toggleIntake = true;
-		// 	}
-		// }
+		if (controller.getAButton()) {
+			toggleShooter = !toggleShooter;
+		}
 
-		// if (toggleIntake) {
-		// 	// ToDo set intake motor to on
-		// 	intakeMotor.set(0.4);
-		// } else {
-		// 	// To do set intake motor to off
-		// 	intakeMotor.stopMotor();
-		// }
+		if (controller.getRightStickButton()) {
+			toggleTransition = !toggleTransition;
+		}
 
-		// Control the transition/shooter.
-		transitionMotor.set((leftStick.getThrottle() / 2) + 0.5);
+		if (toggleShooter) {
+			shooterMotor.set(0.5);
+		} else {
+			shooterMotor.stopMotor();
+		}
+
+		// Intake --> Shooter
+		if (toggleTransition) {
+			transitionMotor.set(0.5);
+		} else {
+			transitionMotor.stopMotor();
+		}
+
 	}
 
 	/** This function is called once each time the robot enters test mode. */
